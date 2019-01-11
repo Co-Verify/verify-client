@@ -84,8 +84,6 @@ app.get('/register', (req, res) => {
     //res.send(users);
 })
 
-
-
 app.get('/login', (req, res) => {
    if(req.cookies.token==null) res.sendFile(path.join(__dirname + '/web/loginnew.html'));
    else res.sendFile(path.join(__dirname + '/web/dashBoard.html'));
@@ -216,7 +214,6 @@ app.post('/login', (req, res) => {
         password: req.body.password
     };
 
-    //res.cookie(token , '${}')
     // queryCar chaincode function - requires 1 argument, ex: args: ['CAR4'],
     // queryAllCars chaincode function - requires no arguments , ex: args: [''],
     const request = {
@@ -246,7 +243,6 @@ app.post('/login', (req, res) => {
                     res.cookie('token' , '${result.token}');
                     res.sendFile(path.join(__dirname + '/web/dashBoard.html'));
                 }
-
             }
         } else {
             console.log("No payloads were returned from query");
