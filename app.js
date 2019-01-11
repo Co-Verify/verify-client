@@ -236,12 +236,17 @@ app.post('/login', (req, res) => {
             } else {
 
                 console.log("Response is ", query_responses[0].toString());
-                var result= JSON.parse(query_responses[0]);
+                var result= JSON.parse(query_responses[0].toString());
                 //edited 
                 console.log(result);
-                res.cookie(token , '${result.token}');
+                
+                if ((!result.hasOwnProperty('token')) || (typeof result.token === "undefined")) {
+                    res.sendFile(path.join(__dirname + '/web/loginnew.html'));                   
+                } else {
+                    res.cookie('token' , '${result.token}');
+                    res.sendFile(path.join(__dirname + '/web/dashBoard.html'));
+                }
 
-                res.send("Token, Key: " + query_responses[0].toString())
             }
         } else {
             console.log("No payloads were returned from query");
