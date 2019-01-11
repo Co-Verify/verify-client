@@ -86,8 +86,13 @@ app.get('/register', (req, res) => {
 
 app.get('/login', (req, res) => {
    if(req.cookies.token==null) res.sendFile(path.join(__dirname + '/web/loginnew.html'));
-   else res.sendFile(path.join(__dirname + '/web/dashBoard.html'));
+   else res.redirect('/dashBoard');// res.sendFile(path.join(__dirname + '/web/dashBoard.html'));
     //res.send(users);
+})
+
+app.get('/dashBoard',(req,res) =>{
+    if(req.cookies.token==null) res.sendFile(path.join(__dirname + '/web/loginnew.html'));
+    else res.sendFile(path.join(__dirname + '/web/dashBoard.html'));
 })
 
 app.get('/logout', (req, res) => {
@@ -238,10 +243,12 @@ app.post('/login', (req, res) => {
                 console.log(result);
                 
                 if ((!result.hasOwnProperty('token')) || (typeof result.token === "undefined")) {
-                    res.sendFile(path.join(__dirname + '/web/loginnew.html'));                   
+                    //res.sendFile(path.join(__dirname + '/web/loginnew.html'));  
+                    res.redirect('/login');                 
                 } else {
                     res.cookie('token' , '${result.token}');
-                    res.sendFile(path.join(__dirname + '/web/dashBoard.html'));
+                    //res.sendFile(path.join(__dirname + '/web/dashBoard.html'));
+                    res.redirect('/dashBoard');
                 }
             }
         } else {
