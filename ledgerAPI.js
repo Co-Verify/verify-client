@@ -8,7 +8,12 @@ var os = require('os');
 exports.invoke = function (channel, request, peer, tx_id) {
 	if(tx_id==null) {
 		tx_id=request.txId;
-	}
+    }
+    
+    console.log("Request: ")
+    console.log(request)
+
+
     var myPromise = new Promise(function (resolve, reject) {
         var transactionPromise = channel.sendTransactionProposal(request);
         
@@ -57,7 +62,7 @@ exports.invoke = function (channel, request, peer, tx_id) {
                         resolve({
                             event_status: 'TIMEOUT'
                         }); //we could use reject(new Error('Trnasaction did not complete within 30 seconds'));
-                    }, 3000);
+                    }, 10000);
                     event_hub.registerTxEvent(transaction_id_string, (tx, code) => {
                             // this is the callback for transaction event status
                             // first some clean up of event listener
