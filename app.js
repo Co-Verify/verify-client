@@ -101,6 +101,10 @@ app.get('/logout', (req, res) => {
     //edited
     var token = req.cookies.token;
     res.clearCookie('token');
+    setTimeout(()=>{
+        res.redirect('/');
+    }, 1000);
+    
     tx_id = fabric_client.newTransactionID();
     console.log("Assigning transaction_id: ", tx_id._transaction_id);
 
@@ -128,7 +132,7 @@ app.get('/logout', (req, res) => {
 
         if (results && results[1] && results[1].event_status === 'VALID') {
             console.log('Successfully committed the change to the ledger by the peer');
-            res.send("Logout Successful");
+            // res.send("Logout Successful");
             
             res.redirect('/');
             // console.log("Response is ", results[0].toString());
