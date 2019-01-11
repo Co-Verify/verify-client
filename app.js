@@ -13,10 +13,9 @@ app.use(bodyParser.urlencoded({
 }));
 app.use(bodyParser.json());
 app.use(fileUpload());
-app.use(express.static(__dirname + '/'));
+app.use(express.static(__dirname + '/web'));
 
 const server = http.createServer(app);
-
 
 ///////////////////////////
 var Fabric_Client = require('fabric-client');
