@@ -98,6 +98,46 @@ app.get('/dashBoard',(req,res) =>{
 app.get('/logout', (req, res) => {
     res.sendFile(path.join(__dirname + '/web/logoutnew.html'));
     //res.send(users);
+    //edited
+    var token = req.cookies.token;
+    tx_id = fabric_client.newTransactionID();
+    console.log("Assigning transaction_id: ", tx_id._transaction_id);
+
+    // createCar chaincode function - requires 5 args, ex: args: ['CAR12', 'Honda', 'Accord', 'Black', 'Tom'],
+    // changeCarOwner chaincode function - requires 2 args , ex: args: ['CAR10', 'Dave'],
+    // must send the proposal to endorsing peers
+    var request = {
+        //targets: let default to the peer assigned to the client
+        chaincodeId: 'fabcar',
+        fcn: 'logout',
+        args: [token],
+        chainId: 'mychannel',
+        txId: tx_id
+    };
+
+    // send the transaction proposal to the peers
+    ledgerAPI.invoke(channel, request, peer).then((results) => {
+        console.log('Send transaction promise and event listener promise have completed');
+        // check the results in the order the promises were added to the promise all list
+        if (results && results[0] && results[0].status === 'SUCCESS') {
+            console.log('Successfully sent transaction to the orderer.');
+        } else {
+            console.error('Failed to order the transaction. Error code: ' + results[0].status);
+        }
+
+        if (results && results[1] && results[1].event_status === 'VALID') {
+            console.log('Successfully committed the change to the ledger by the peer');
+            res.send("Logout Successful");
+            clearCookie('token');
+            res.redirect('/');
+            // console.log("Response is ", results[0].toString());
+
+        } else {
+            console.log('Transaction failed to be committed to the ledger due to ::' + results[1].event_status);
+        }
+    }).catch((err) => {
+        console.error('Failed to invoke successfully :: ' + err);
+    });
 })
 
 app.get('/uploadDocument', (req, res) => {
@@ -123,7 +163,6 @@ app.get('/listRequest', (req, res) => {
 app.get('/listOfRequest', (req, res) => {
     res.sendFile(path.join(__dirname + '/web/listOfRequest.html'));
 })
-
 
 
 
@@ -158,7 +197,8 @@ app.post('/register', (req, res) => {
 
         if (results && results[1] && results[1].event_status === 'VALID') {
             console.log('Successfully committed the change to the ledger by the peer');
-            res.send("Account Created");
+            //res.send("Account Created");
+            res.redirect('/login');
 
         } else {
             console.log('Transaction failed to be committed to the ledger due to ::' + results[1].event_status);
@@ -168,50 +208,7 @@ app.post('/register', (req, res) => {
     });
 });
 
-app.post('/logout', (req, res) => {
 
-    const user = {
-        key: req.body.key,
-    };
-
-    // get a transaction id object based on the current user assigned to fabric client
-    tx_id = fabric_client.newTransactionID();
-    console.log("Assigning transaction_id: ", tx_id._transaction_id);
-
-    // createCar chaincode function - requires 5 args, ex: args: ['CAR12', 'Honda', 'Accord', 'Black', 'Tom'],
-    // changeCarOwner chaincode function - requires 2 args , ex: args: ['CAR10', 'Dave'],
-    // must send the proposal to endorsing peers
-    var request = {
-        //targets: let default to the peer assigned to the client
-        chaincodeId: 'fabcar',
-        fcn: 'logout',
-        args: [user.key],
-        chainId: 'mychannel',
-        txId: tx_id
-    };
-
-    // send the transaction proposal to the peers
-    ledgerAPI.invoke(channel, request, peer).then((results) => {
-        console.log('Send transaction promise and event listener promise have completed');
-        // check the results in the order the promises were added to the promise all list
-        if (results && results[0] && results[0].status === 'SUCCESS') {
-            console.log('Successfully sent transaction to the orderer.');
-        } else {
-            console.error('Failed to order the transaction. Error code: ' + results[0].status);
-        }
-
-        if (results && results[1] && results[1].event_status === 'VALID') {
-            console.log('Successfully committed the change to the ledger by the peer');
-            res.send("Logout Successful");
-            // console.log("Response is ", results[0].toString());
-
-        } else {
-            console.log('Transaction failed to be committed to the ledger due to ::' + results[1].event_status);
-        }
-    }).catch((err) => {
-        console.error('Failed to invoke successfully :: ' + err);
-    });
-});
 
 app.post('/login', (req, res) => {
     const user = {
