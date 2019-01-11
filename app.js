@@ -5,8 +5,10 @@ var ledgerAPI = require('./ledgerAPI')
 
 var bodyParser = require("body-parser");
 const fileUpload = require('express-fileupload');
+const cookieParser = require("cookie-parser");
 var app = express()
 
+app.use(cookieParser());
 app.use(express.json());
 app.use(bodyParser.urlencoded({
     extended: false
@@ -82,8 +84,11 @@ app.get('/register', (req, res) => {
     //res.send(users);
 })
 
+
+
 app.get('/login', (req, res) => {
-    res.sendFile(path.join(__dirname + '/web/loginnew.html'));
+   if(req.cookies.token==null) res.sendFile(path.join(__dirname + '/web/loginnew.html'));
+   else res.sendFile(path.join(__dirname + '/web/dashBoard.html'));
     //res.send(users);
 })
 
@@ -211,7 +216,7 @@ app.post('/login', (req, res) => {
         password: req.body.password
     };
 
-
+    //res.cookie(token , '${}')
     // queryCar chaincode function - requires 1 argument, ex: args: ['CAR4'],
     // queryAllCars chaincode function - requires no arguments , ex: args: [''],
     const request = {
@@ -229,7 +234,13 @@ app.post('/login', (req, res) => {
             if (query_responses[0] instanceof Error) {
                 console.error("error from query = ", query_responses[0]);
             } else {
+
                 console.log("Response is ", query_responses[0].toString());
+                var result= JSON.parse(query_responses[0]);
+                //edited 
+                console.log(result);
+                res.cookie(token , '${result.token}');
+
                 res.send("Token, Key: " + query_responses[0].toString())
             }
         } else {
