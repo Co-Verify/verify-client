@@ -100,7 +100,7 @@ app.get('/logout', (req, res) => {
     //res.send(users);
     //edited
     var token = req.cookies.token;
-    clearCookie('token');
+    res.clearCookie('token');
     tx_id = fabric_client.newTransactionID();
     console.log("Assigning transaction_id: ", tx_id._transaction_id);
 
