@@ -80,7 +80,8 @@ app.get('/',(req,res) =>{
 })
 
 app.get('/register', (req, res) => {
-    res.sendFile(path.join(__dirname + '/web/registernew.html'));
+    if(req.cookies.token==null) res.sendFile(path.join(__dirname + '/web/registernew.html'));
+    else es.redirect('/dashBoard');
     //res.send(users);
 })
 
@@ -91,7 +92,7 @@ app.get('/login', (req, res) => {
 })
 
 app.get('/dashBoard',(req,res) =>{
-    if(req.cookies.token==null) res.sendFile(path.join(__dirname + '/web/loginnew.html'));
+    if(req.cookies.token==null) res.redirect('/login');
     else res.sendFile(path.join(__dirname + '/web/dashBoard.html'));
 })
 
@@ -146,27 +147,33 @@ app.get('/logout', (req, res) => {
 })
 
 app.get('/uploadDocument', (req, res) => {
-    res.sendFile(path.join(__dirname + '/web/uploadDocument.html'));
+    if(req.cookies.token==null) res.redirect('/login');
+    else res.sendFile(path.join(__dirname + '/web/uploadDocument.html'));
 })
 
 app.get('/RequestForSignature', (req, res) => {
-    res.sendFile(path.join(__dirname + '/web/RequestForSignature.html'));
+    if(req.cookies.token==null) res.redirect('/login');
+    else res.sendFile(path.join(__dirname + '/web/RequestForSignature.html'));
 })
 
 app.get('/signDoc', (req, res) => {
-    res.sendFile(path.join(__dirname + '/web/signDoc.html'));
+    if(req.cookies.token==null) res.redirect('/login');
+    else res.sendFile(path.join(__dirname + '/web/signDoc.html'));
 })
 
 app.get('/checkSignature', (req, res) => {
-    res.sendFile(path.join(__dirname + '/web/checkSignature.html'));
+    if(req.cookies.token==null) res.redirect('/login');
+    else res.sendFile(path.join(__dirname + '/web/checkSignature.html'));
 })
 
 app.get('/listRequest', (req, res) => {
-    res.sendFile(path.join(__dirname + '/web/listRequest.html'));
+    if(req.cookies.token==null) res.redirect('/login');
+    else res.sendFile(path.join(__dirname + '/web/listRequest.html'));
 })
 
 app.get('/listOfRequest', (req, res) => {
-    res.sendFile(path.join(__dirname + '/web/listOfRequest.html'));
+    if(req.cookies.token==null) res.redirect('/login');
+    else res.sendFile(path.join(__dirname + '/web/listOfRequest.html'));
 })
 
 
