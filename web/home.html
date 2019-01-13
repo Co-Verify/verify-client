@@ -1,0 +1,116 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact V1</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--===============================================================================================-->
+<link rel="icon" type="image/png" href="/vhome/images/icons/favicon.ico"/>
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css" href="/vhome/vendor/bootstrap/css/bootstrap.min.css">
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css" href="/vhome/fonts/font-awesome-4.7.0/css/font-awesome.min.css">
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css" href="/vhome/vendor/animate/animate.css">
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css" href="/vhome/vendor/css-hamburgers/hamburgers.min.css">
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css" href="/vhome/vendor/select2/select2.min.css">
+<!--===============================================================================================-->
+<link rel="stylesheet" type="text/css" href="/vhome/css/util.css">
+<link rel="stylesheet" type="text/css" href="/vhome/css/main.css">
+<!--===============================================================================================-->
+<style>
+body {margin: 0;}
+
+ul.topnav {
+list-style-type: none;
+margin: 0;
+padding: 0;
+overflow: hidden;
+background-color: #333;
+}
+
+ul.topnav li {float: left;}
+
+ul.topnav li a {
+display: block;
+color: rgb(170, 152, 152);
+text-align: center;
+padding: 14px 16px;
+text-decoration: none;
+}
+
+ul.topnav li a:hover:not(.active) {background-color: #111;}
+
+ul.topnav li a.active {background-color: #4CAF50;}
+
+ul.topnav li.right {float: right;}
+
+@media screen and (max-width: 600px) {
+ul.topnav li.right, 
+ul.topnav li {float: none;}
+}
+</style>
+</head>
+<body>
+
+<ul class="topnav">
+<li><a class="active" href="/home">Home</a></li>
+<li><a href="/myDoc">My Document</a></li>
+<li><a href="/myReq">My Requests</a></li>
+
+<li class="right"><a href="/login">login</a></li>
+<li class="right"><a href="/register">Register</a></li>
+</ul>
+
+<div class="contact1">
+<div class="container-contact1">
+<div class="contact1-pic js-tilt" data-tilt>
+<img src="/images/img-01.png" alt="IMG">
+</div>
+
+<form class="contact1-form validate-form">
+<span class="contact1-form-title">
+<h2>Document Veryfier</h2>
+</span>
+
+
+<p>It is a document verification system using hyperledger-fabric.</p>
+
+</form>
+</div>
+</div>
+
+<!--===============================================================================================-->
+<script src="/vendor/jquery/jquery-3.2.1.min.js"></script>
+<!--===============================================================================================-->
+<script src="/vendor/bootstrap/js/popper.js"></script>
+<script src="/vendor/bootstrap/js/bootstrap.min.js"></script>
+<!--===============================================================================================-->
+<script src="/vendor/select2/select2.min.js"></script>
+<!--===============================================================================================-->
+<script src="/vendor/tilt/tilt.jquery.min.js"></script>
+<script >
+$('.js-tilt').tilt({
+scale: 1.1
+})
+</script>
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-23581568-13"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+
+gtag('config', 'UA-23581568-13');
+</script>
+
+<!--===============================================================================================-->
+<script src="/js/main.js"></script>
+
+</body>
+</html>
