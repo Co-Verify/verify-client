@@ -1,6 +1,9 @@
 var express = require("express")
+var crypto = require("crypto");
+var fs = require("fs");
 var http = require("http")
 var path = require("path")
+var ursa = require("ursa");
 var ledgerAPI = require('./ledgerAPI')
 
 var bodyParser = require("body-parser");
@@ -74,25 +77,25 @@ Fabric_Client.newDefaultKeyValueStore({
 
 // var users =[{id:1,name:'anam',email:'anamibnaharun@gmail.com',password:'anam'}];
 
-app.get('/',(req,res) =>{
-    res.sendFile(path.join(__dirname+'/web/loginnew.html'));
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname + '/web/loginnew.html'));
     //res.send(users);
 })
 
 app.get('/register', (req, res) => {
-    if(req.cookies.token==null) res.sendFile(path.join(__dirname + '/web/registernew.html'));
-    else es.redirect('/dashBoard');
+    if (req.cookies.token == null) res.sendFile(path.join(__dirname + '/web/registernew.html'));
+    else res.redirect('/dashBoard');
     //res.send(users);
 })
 
 app.get('/login', (req, res) => {
-   if(req.cookies.token==null) res.sendFile(path.join(__dirname + '/web/loginnew.html'));
-   else res.redirect('/dashBoard');// res.sendFile(path.join(__dirname + '/web/dashBoard.html'));
+    if (req.cookies.token == null) res.sendFile(path.join(__dirname + '/web/loginnew.html'));
+    else res.redirect('/dashBoard'); // res.sendFile(path.join(__dirname + '/web/dashBoard.html'));
     //res.send(users);
 })
 
-app.get('/dashBoard',(req,res) =>{
-    if(req.cookies.token==null) res.redirect('/login');
+app.get('/dashBoard', (req, res) => {
+    if (req.cookies.token == null) res.redirect('/login');
     else res.sendFile(path.join(__dirname + '/web/dashBoard.html'));
 })
 
@@ -102,10 +105,10 @@ app.get('/logout', (req, res) => {
     //edited
     var token = req.cookies.token;
     res.clearCookie('token');
-    setTimeout(()=>{
+    setTimeout(() => {
         res.redirect('/');
     }, 1000);
-    
+
     tx_id = fabric_client.newTransactionID();
     console.log("Assigning transaction_id: ", tx_id._transaction_id);
 
@@ -134,7 +137,7 @@ app.get('/logout', (req, res) => {
         if (results && results[1] && results[1].event_status === 'VALID') {
             console.log('Successfully committed the change to the ledger by the peer');
             // res.send("Logout Successful");
-            
+
             res.redirect('/');
             // console.log("Response is ", results[0].toString());
 
@@ -147,36 +150,49 @@ app.get('/logout', (req, res) => {
 })
 
 app.get('/uploadDocument', (req, res) => {
-    if(req.cookies.token==null) res.redirect('/login');
+    if (req.cookies.token == null) res.redirect('/login');
     else res.sendFile(path.join(__dirname + '/web/uploadDocument.html'));
 })
 
 app.get('/RequestForSignature', (req, res) => {
-    if(req.cookies.token==null) res.redirect('/login');
+    if (req.cookies.token == null) res.redirect('/login');
     else res.sendFile(path.join(__dirname + '/web/RequestForSignature.html'));
 })
 
 app.get('/signDoc', (req, res) => {
-    if(req.cookies.token==null) res.redirect('/login');
+    if (req.cookies.token == null) res.redirect('/login');
     else res.sendFile(path.join(__dirname + '/web/signDoc.html'));
 })
 
 app.get('/checkSignature', (req, res) => {
-    if(req.cookies.token==null) res.redirect('/login');
+    if (req.cookies.token == null) res.redirect('/login');
     else res.sendFile(path.join(__dirname + '/web/checkSignature.html'));
 })
 
 app.get('/listRequest', (req, res) => {
-    if(req.cookies.token==null) res.redirect('/login');
+    if (req.cookies.token == null) res.redirect('/login');
     else res.sendFile(path.join(__dirname + '/web/listRequest.html'));
 })
 
 app.get('/listOfRequest', (req, res) => {
-    if(req.cookies.token==null) res.redirect('/login');
+    if (req.cookies.token == null) res.redirect('/login');
     else res.sendFile(path.join(__dirname + '/web/listOfRequest.html'));
 })
 
+/**
+ * Generate a new private key object (aka a keypair).
+ */
+function getEncryptKey(data, encryptKey) {
+    var algorithm = 'aes256';
+    var inputEncoding = 'utf8';
+    var outputEncoding = 'hex';
 
+    var encryptKey = crypto.createHash('md5').update(encryptKey).digest("base64");
+    var cipher = crypto.createCipher(algorithm, encryptKey);
+    var ciphered = cipher.update(data, inputEncoding, outputEncoding);
+    ciphered += cipher.final(outputEncoding);
+    return ciphered;
+}
 
 app.post('/register', (req, res) => {
     const user = {
@@ -185,14 +201,30 @@ app.post('/register', (req, res) => {
         password: req.body.password
     };
 
+    var keyPair = ursa.generatePrivateKey(1024, 65537);
+    var privkeypem = keyPair.toPrivatePem();
+    var pubkeypem = keyPair.toPublicPem();
+
+    var privkeystr = privkeypem.toString('utf8');
+    var pubkeystr = pubkeypem.toString('utf8');
+    console.log(privkeystr);
+    console.log(pubkeystr);
+
+    encryptedPrivKey = getEncryptKey(privkeystr, user.password);
+    console.log(encryptedPrivKey);
+
     // get a transaction id object based on the current user assigned to fabric client
     tx_id = fabric_client.newTransactionID();
     console.log("Assigning transaction_id: ", tx_id._transaction_id);
 
+    console.log(user.password)
+    user.password = crypto.createHash('sha256').update(user.password).digest("base64");
+    console.log(user.password)
+    
     var request = {
         chaincodeId: 'fabcar',
         fcn: 'register',
-        args: [user.name, user.email, user.password],
+        args: [user.name, user.email, user.password, encryptedPrivKey, pubkeystr],
         chainId: 'mychannel',
         txId: tx_id
     };
@@ -228,6 +260,10 @@ app.post('/login', (req, res) => {
         password: req.body.password
     };
 
+    console.log(user.password)
+    user.password = crypto.createHash('sha256').update(user.password).digest("base64");
+    console.log(user.password)
+
     // queryCar chaincode function - requires 1 argument, ex: args: ['CAR4'],
     // queryAllCars chaincode function - requires no arguments , ex: args: [''],
     const request = {
@@ -247,15 +283,16 @@ app.post('/login', (req, res) => {
             } else {
 
                 console.log("Response is ", query_responses[0].toString());
-                var result= JSON.parse(query_responses[0].toString());
+                var result = JSON.parse(query_responses[0].toString());
                 //edited 
                 console.log(result);
-                
+
                 if ((!result.hasOwnProperty('token')) || (typeof result.token === "undefined")) {
                     //res.sendFile(path.join(__dirname + '/web/loginnew.html'));  
-                    res.redirect('/login');                 
+                    res.redirect('/login');
                 } else {
-                    res.cookie('token' , '${result.token}');
+                    res.cookie('token', result.token);
+
                     //res.sendFile(path.join(__dirname + '/web/dashBoard.html'));
                     res.redirect('/dashBoard');
                 }
