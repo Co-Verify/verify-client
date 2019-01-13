@@ -4,19 +4,18 @@ var path = require('path');
 var util = require('util');
 var os = require('os');
 
-
 exports.invoke = function (channel, request, peer, tx_id) {
-	if(tx_id==null) {
-		tx_id=request.txId;
+    if (tx_id == null) {
+        tx_id = request.txId;
     }
-    
+
     console.log("Request: ")
     console.log(request)
 
 
     var myPromise = new Promise(function (resolve, reject) {
         var transactionPromise = channel.sendTransactionProposal(request);
-        
+
         transactionPromise.then((results) => {
             var proposalResponses = results[0];
             var proposal = results[1];
@@ -106,4 +105,26 @@ exports.invoke = function (channel, request, peer, tx_id) {
 
 exports.query = function (channel, request) {
     return channel.queryByChaincode(request);
+}
+
+exports.slimInvoke = function (channel, request, peer, tx_id) {
+    var slimInvokePromise = new Promise(function (resolve, reject) {
+        exports.invoke(channel, request, peer, tx_id).then((results) => {
+            console.log('Send transaction promise and event listener promise have completed');
+            // check the results in the order the promises were added to the promise all list
+            if (results && results[0] && results[0].status === 'SUCCESS') {
+                console.log('Successfully sent transaction to the orderer.');
+            } else {
+                console.error('Failed to order the transaction. Error code: ' + results[0].status);
+            }
+
+            if (results && results[1] && results[1].event_status === 'VALID') {
+                console.log('Successfully committed the change to the ledger by the peer');
+                resolve()
+            } else {
+                console.log('Transaction failed to be committed to the ledger due to ::' + results[1].event_status);
+            }
+        })
+    });
+    return slimInvokePromise;
 }
