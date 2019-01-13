@@ -1,4 +1,14 @@
-var express = require("express")
+/* =================================================== */
+/* ===== Section 1: Require all the dependencies ===== */
+/* =================================================== */
+
+const express = require('express');
+const bodyParser = require('body-parser');
+const multer = require('multer');
+const upload = multer({ dest: './files/' });
+const hbs = require('hbs');
+const logger = require('morgan');
+
 var crypto = require("crypto");
 var fs = require("fs");
 var http = require("http")
@@ -6,10 +16,28 @@ var path = require("path")
 var ursa = require("ursa");
 var ledgerAPI = require('./ledgerAPI')
 
-var bodyParser = require("body-parser");
-const fileUpload = require('express-fileupload');
+// const fileUpload = require('express-fileupload');
 const cookieParser = require("cookie-parser");
-var app = express()
+
+// Define port for app to listen on
+const port =  process.env.PORT || 3000;
+
+/* ==================================================== */
+/* ===== Section 2: Configure express middlewares ===== */
+/* ==================================================== */
+
+const app =  express();
+app.use(bodyParser());  // to use bodyParser (for text/number data transfer between clientg and server)
+app.set('view engine', 'hbs');  // setting hbs as the view engine
+
+app.set('view engine', 'html');
+app.engine('html', require('hbs').__express);
+
+app.use(express.static(__dirname + '/web'));  // making ./public as the static directory
+app.set('views', __dirname + '/web');  // making ./views as the views directory
+app.use(logger('dev'));  // Creating a logger (using morgan)
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
 app.use(cookieParser());
 app.use(express.json());
@@ -17,7 +45,7 @@ app.use(bodyParser.urlencoded({
     extended: false
 }));
 app.use(bodyParser.json());
-app.use(fileUpload());
+// app.use(fileUpload());
 app.use(express.static(__dirname + '/web'));
 
 const server = http.createServer(app);
@@ -151,7 +179,8 @@ app.get('/logout', (req, res) => {
 
 app.get('/uploadDocument', (req, res) => {
     if (req.cookies.token == null) res.redirect('/login');
-    else res.sendFile(path.join(__dirname + '/web/uploadDocument.html'));
+    else res.render('uploadDocument.html', {userToken: req.cookies.token});
+    //  res.sendFile(path.join(__dirname + '/web/uploadDocument.html'));
 })
 
 app.get('/RequestForSignature', (req, res) => {
@@ -316,19 +345,34 @@ function makeid() {
     return text;
 };
 
-app.post('/uploadDocument', (req, res) => {
-
+app.post('/uploadDocument', upload.single('myfile'), (req, res) => {
     token = req.body.token;
 
-    if (Object.keys(req.files).length == 0) {
-        return res.status(400).send('No files were uploaded.');
+    // if (Object.keys(req.files).length == 0) {
+    //     return res.status(400).send('No files were uploaded.');
+    // }
+
+    if (req.file) {
+        console.log('Uploading file...');
+        var filename = req.file.filename;
+        var uploadStatus = 'File Uploaded Successfully';
+    } else {
+        console.log('No File Uploaded');
+        var filename = 'FILE NOT UPLOADED';
+        var uploadStatus = 'File Upload Failed';
     }
 
+    // res.render('uploadDocument.html', {status: uploadStatus, filename: filename, userToken: req.cookies.token});
+    // return
 
-    fileName = req.files.myfile.name;
+    console.log(token)
+    console.log(req.file)
+
+    fileName = req.file.originalname;
     fileHash = makeid();
+    var uploadStatus = 'File Uploaded Successfully';
 
-    req.files.myfile.mv(__dirname + "/files/" + fileHash + "/" + fileName);
+    // req.files.myfile.mv(__dirname + "/files/" + fileHash + "/" + fileName);
 
     // get a transaction id object based on the current user assigned to fabric client
     tx_id = fabric_client.newTransactionID();
@@ -358,7 +402,10 @@ app.post('/uploadDocument', (req, res) => {
 
         if (results && results[1] && results[1].event_status === 'VALID') {
             console.log('Successfully committed the change to the ledger by the peer');
-            res.send("Upload Successful");
+            
+            res.render('uploadDocument.html', {status: uploadStatus, filename: fileName, userToken: req.cookies.token});
+            // res.send("Upload Successful");
+            
             // console.log("Response is ", results[0].toString());
 
         } else {
@@ -370,7 +417,7 @@ app.post('/uploadDocument', (req, res) => {
 });
 
 
-server.listen(3000, err => {
+server.listen(port, err => {
     if (err) {
         throw err
     }
