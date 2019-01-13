@@ -18,7 +18,9 @@
     "hbs": "^4.0.1",
     "morgan": "^1.9.1",
     "multer": "^1.4.1",
+    "mv": "^2.1.1",
     "nodemon": "^1.18.9",
+    "smart-timeout": "^2.0.3",
     "ursa": "^0.9.4"
   },
   "author": "Anthony O'Dowd",

@@ -5,39 +5,45 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const multer = require('multer');
-const upload = multer({ dest: './files/' });
+const upload = multer({
+    dest: './files/'
+});
 const hbs = require('hbs');
 const logger = require('morgan');
-
+var Timeout = require('smart-timeout')
 var crypto = require("crypto");
 var fs = require("fs");
 var http = require("http")
 var path = require("path")
 var ursa = require("ursa");
 var ledgerAPI = require('./ledgerAPI')
+var move = require('./fileMovement')
 
 // const fileUpload = require('express-fileupload');
 const cookieParser = require("cookie-parser");
 
 // Define port for app to listen on
-const port =  process.env.PORT || 3000;
+const port = process.env.PORT || 3000;
 
 /* ==================================================== */
 /* ===== Section 2: Configure express middlewares ===== */
 /* ==================================================== */
 
-const app =  express();
-app.use(bodyParser());  // to use bodyParser (for text/number data transfer between clientg and server)
-app.set('view engine', 'hbs');  // setting hbs as the view engine
+const app = express();
+app.use(bodyParser()); // to use bodyParser (for text/number data transfer between clientg and server)
+app.set('view engine', 'hbs'); // setting hbs as the view engine
 
 app.set('view engine', 'html');
 app.engine('html', require('hbs').__express);
 
-app.use(express.static(__dirname + '/web'));  // making ./public as the static directory
-app.set('views', __dirname + '/web');  // making ./views as the views directory
-app.use(logger('dev'));  // Creating a logger (using morgan)
+app.use(express.static(__dirname + '/web')); // making ./public as the static directory
+app.use(express.static(__dirname + '/files')); // making ./public as the static directory
+app.set('views', __dirname + '/web'); // making ./views as the views directory
+app.use(logger('dev')); // Creating a logger (using morgan)
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({
+    extended: false
+}));
 
 app.use(cookieParser());
 app.use(express.json());
@@ -133,9 +139,12 @@ app.get('/logout', (req, res) => {
     //edited
     var token = req.cookies.token;
     res.clearCookie('token');
-    setTimeout(() => {
+
+    var redirect = function () {
         res.redirect('/');
-    }, 1000);
+    }
+
+    Timeout.set(redirect, 3000)
 
     tx_id = fabric_client.newTransactionID();
     console.log("Assigning transaction_id: ", tx_id._transaction_id);
@@ -165,8 +174,10 @@ app.get('/logout', (req, res) => {
         if (results && results[1] && results[1].event_status === 'VALID') {
             console.log('Successfully committed the change to the ledger by the peer');
             // res.send("Logout Successful");
-
-            res.redirect('/');
+            if (Timeout.pending(redirect)) {
+                Timeout.clear(redirect)
+                redirect();
+            }
             // console.log("Response is ", results[0].toString());
 
         } else {
@@ -179,7 +190,9 @@ app.get('/logout', (req, res) => {
 
 app.get('/uploadDocument', (req, res) => {
     if (req.cookies.token == null) res.redirect('/login');
-    else res.render('uploadDocument.html', {userToken: req.cookies.token});
+    else res.render('uploadDocument.html', {
+        userToken: req.cookies.token
+    });
     //  res.sendFile(path.join(__dirname + '/web/uploadDocument.html'));
 })
 
@@ -249,7 +262,7 @@ app.post('/register', (req, res) => {
     console.log(user.password)
     user.password = crypto.createHash('sha256').update(user.password).digest("base64");
     console.log(user.password)
-    
+
     var request = {
         chaincodeId: 'fabcar',
         fcn: 'register',
@@ -345,74 +358,109 @@ function makeid() {
     return text;
 };
 
+function hashDocument(filePath, algorithm) {
+    var hashPromise = new Promise(function (resolve, reject) {
+        shasum = crypto.createHash(algorithm)
+
+        // Updating shasum with file content
+        s = fs.ReadStream(filePath)
+
+        s.on('data', function (data) {
+            shasum.update(data)
+        })
+
+        // making digest
+        s.on('end', function () {
+            var hash = shasum.digest('base64')
+            resolve(hash)
+        })
+    });
+    return hashPromise;
+}
+
 app.post('/uploadDocument', upload.single('myfile'), (req, res) => {
-    token = req.body.token;
+    var token = req.cookies.token;
 
-    // if (Object.keys(req.files).length == 0) {
-    //     return res.status(400).send('No files were uploaded.');
-    // }
-
-    if (req.file) {
-        console.log('Uploading file...');
-        var filename = req.file.filename;
-        var uploadStatus = 'File Uploaded Successfully';
-    } else {
+    if (!req.file) {
         console.log('No File Uploaded');
         var filename = 'FILE NOT UPLOADED';
         var uploadStatus = 'File Upload Failed';
+
+        res.render('uploadDocument.html', {
+            status: uploadStatus,
+            filename: filename,
+            userToken: req.cookies.token
+        });
+        return
     }
 
-    // res.render('uploadDocument.html', {status: uploadStatus, filename: filename, userToken: req.cookies.token});
-    // return
-
-    console.log(token)
-    console.log(req.file)
-
-    fileName = req.file.originalname;
-    fileHash = makeid();
+    console.log('Uploading file...');
+    var filename = req.file.originalname;
     var uploadStatus = 'File Uploaded Successfully';
 
-    // req.files.myfile.mv(__dirname + "/files/" + fileHash + "/" + fileName);
+    console.log("token: ", token)
+    console.log(req.file)
 
-    // get a transaction id object based on the current user assigned to fabric client
-    tx_id = fabric_client.newTransactionID();
-    console.log("Assigning transaction_id: ", tx_id._transaction_id);
+    ////////////////////////////////////////
+    var algorithm = 'sha256';
+    var oldfilepath = __dirname + "/" + req.file.path;
+    hashDocument(oldfilepath, algorithm).then((fileHash) => {
+        newPath = __dirname + "/files/" + Date.now() + "/" + filename;
+        move(oldfilepath, newPath).then(() => {
+            //////////////////////////////////////////////////
+            // get a transaction id object based on the current user assigned to fabric client
+            tx_id = fabric_client.newTransactionID();
+            console.log("Assigning transaction_id: ", tx_id._transaction_id);
 
-    // createCar chaincode function - requires 5 args, ex: args: ['CAR12', 'Honda', 'Accord', 'Black', 'Tom'],
-    // changeCarOwner chaincode function - requires 2 args , ex: args: ['CAR10', 'Dave'],
-    // must send the proposal to endorsing peers
-    var request = {
-        //targets: let default to the peer assigned to the client
-        chaincodeId: 'fabcar',
-        fcn: 'uploadDocument',
-        args: [token, fileName, fileHash],
-        chainId: 'mychannel',
-        txId: tx_id
-    };
+            // createCar chaincode function - requires 5 args, ex: args: ['CAR12', 'Honda', 'Accord', 'Black', 'Tom'],
+            // changeCarOwner chaincode function - requires 2 args , ex: args: ['CAR10', 'Dave'],
+            // must send the proposal to endorsing peers
+            var request = {
+                //targets: let default to the peer assigned to the client
+                chaincodeId: 'fabcar',
+                fcn: 'uploadDocument',
+                args: [token, filename, fileHash, newPath],
+                chainId: 'mychannel',
+                txId: tx_id
+            };
 
-    // send the transaction proposal to the peers
-    ledgerAPI.invoke(channel, request, peer).then((results) => {
-        console.log('Send transaction promise and event listener promise have completed');
-        // check the results in the order the promises were added to the promise all list
-        if (results && results[0] && results[0].status === 'SUCCESS') {
-            console.log('Successfully sent transaction to the orderer.');
-        } else {
-            console.error('Failed to order the transaction. Error code: ' + results[0].status);
-        }
+            // ledgerAPI.invoke(channel, request, peer).then((results) => {
+            //     console.log('Send transaction promise and event listener promise have completed');
+            //     // check the results in the order the promises were added to the promise all list
+            //     if (results && results[0] && results[0].status === 'SUCCESS') {
+            //         console.log('Successfully sent transaction to the orderer.');
+            //     } else {
+            //         console.error('Failed to order the transaction. Error code: ' + results[0].status);
+            //     }
 
-        if (results && results[1] && results[1].event_status === 'VALID') {
-            console.log('Successfully committed the change to the ledger by the peer');
-            
-            res.render('uploadDocument.html', {status: uploadStatus, filename: fileName, userToken: req.cookies.token});
-            // res.send("Upload Successful");
-            
-            // console.log("Response is ", results[0].toString());
+            //     if (results && results[1] && results[1].event_status === 'VALID') {
+            //         console.log('Successfully committed the change to the ledger by the peer');
+            //         //res.send("Account Created");
+            //         res.render('uploadDocument.html', {
+            //             status: uploadStatus,
+            //             filename: filename,
+            //             userToken: req.cookies.token
+            //         });
 
-        } else {
-            console.log('Transaction failed to be committed to the ledger due to ::' + results[1].event_status);
-        }
-    }).catch((err) => {
-        console.error('Failed to invoke successfully :: ' + err);
+            //     } else {
+            //         console.log('Transaction failed to be committed to the ledger due to ::' + results[1].event_status);
+            //     }
+            // }).catch((err) => {
+            //     console.error('Failed to invoke successfully :: ' + err);
+            // });
+
+            // send the transaction proposal to the peers
+            ledgerAPI.slimInvoke(channel, request, peer).then(() => {
+            res.render('uploadDocument.html', {
+                status: uploadStatus,
+                filename: filename,
+                userToken: req.cookies.token
+            });
+            }).catch((err) => {
+                console.error('Failed to invoke successfully :: ' + err);
+            });
+            /////////////////////////////////////////////////
+        });
     });
 });
 
