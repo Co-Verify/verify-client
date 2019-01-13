@@ -8,76 +8,76 @@
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
   <style>
-    body {margin: 0;}
-    
-    ul.topnav {
+  body {margin: 0;}
+  
+  ul.topnav {
     list-style-type: none;
     margin: 0;
     padding: 0;
     overflow: hidden;
     background-color: #333;
-    }
-    
-    ul.topnav li {float: left;}
-    
-    ul.topnav li a {
+  }
+  
+  ul.topnav li {float: left;}
+  
+  ul.topnav li a {
     display: block;
     color: white;
     text-align: center;
     padding: 14px 16px;
     text-decoration: none;
-    }
-    
-    ul.topnav li a:hover:not(.active) {background-color: #111;}
-    
-    ul.topnav li a.active {background-color: #4CAF50;}
-    
-    ul.topnav li.right {float: right;}
-    
-    @media screen and (max-width: 600px) {
+  }
+  
+  ul.topnav li a:hover:not(.active) {background-color: #111;}
+  
+  ul.topnav li a.active {background-color: #4CAF50;}
+  
+  ul.topnav li.right {float: right;}
+  
+  @media screen and (max-width: 600px) {
     ul.topnav li.right, 
     ul.topnav li {float: none;}
-    }
-    </style>
+  }
+</style>
 </head>
 <body>
-        <ul class="topnav">
-                <li><a class="active" href="/home">Home</a></li>
-                <li><a href="/myDoc">My Document</a></li>
-                <li><a href="/myReq">My Requests</a></li>
-                
-                <li class="right"><a href="/login">login</a></li>
-                <li class="right"><a href="/register">Register</a></li>
-                </ul>
+  <ul class="topnav">
+    <li><a href="/home">Home</a></li>
+    <li><a href="/myDoc">My Document</a></li>
+    <li><a class="active" href="/myReq">My Requests</a></li>
+    
+    <li class="right"><a href="/login">login</a></li>
+    <li class="right"><a href="/register">Register</a></li>
+  </ul>
 
-<div class="container">           
-  <table class="table table-hover">
-    <thead>
-      <tr>
-        <th>Documents</th>
-        <th>Status</th>
-        <th>Check Signatures</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><a href="#">Doc1</a></td>
-        <td>Verified</td>
-        <td><button type="button" class="btn btn-success">Check</button></td>
-      </tr>
-      <tr>
-        <<td><a href="#">Doc2</a></td>
-        <td>Verified</td>
-        <td><button type="button" class="btn btn-success">Check</button></td>
-      </tr>
-      <tr>
-            <td><a href="#">Doc3</a></td>
-            <td>Verified</td>
-            <td><button type="button" class="btn btn-success">Check</button></td>
-      </tr>
-    </tbody>
-  </table>
-</div>
+  <div class="container">
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th>Documents</th>
+          <th>Status</th>
+          <th>Check Signatures</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><a href="#">Doc1</a></td>
+          <td>Verified</td>
+          <td><button type="button" class="btn btn-success">Check</button></td>
+        </tr>
+        <tr>
+          <td><a href="#">Doc2</a></td>
+          <td>Verified</td>
+          <td><button type="button" class="btn btn-success">Check</button></td>
+        </tr>
+        <tr>
+          <td><a href="#">Doc3</a></td>
+          <td>Verified</td>
+          <td><button type="button" class="btn btn-success">Check</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 
 </body>
 </html>

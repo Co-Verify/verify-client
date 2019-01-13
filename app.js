@@ -36,8 +36,10 @@ app.set('view engine', 'hbs'); // setting hbs as the view engine
 app.set('view engine', 'html');
 app.engine('html', require('hbs').__express);
 
+var router = express.Router();
 app.use(express.static(__dirname + '/web')); // making ./public as the static directory
 app.use(express.static(__dirname + '/files')); // making ./public as the static directory
+app.use('/', router);
 app.set('views', __dirname + '/web'); // making ./views as the views directory
 app.use(logger('dev')); // Creating a logger (using morgan)
 app.use(express.json());
@@ -52,7 +54,7 @@ app.use(bodyParser.urlencoded({
 }));
 app.use(bodyParser.json());
 // app.use(fileUpload());
-app.use(express.static(__dirname + '/web'));
+// app.use(express.static(__dirname + '/web'));
 
 const server = http.createServer(app);
 
@@ -112,7 +114,9 @@ Fabric_Client.newDefaultKeyValueStore({
 // var users =[{id:1,name:'anam',email:'anamibnaharun@gmail.com',password:'anam'}];
 
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname + '/web/loginnew.html'));
+    if (req.cookies.token == null) res.render('home.html');
+    else res.redirect('/dashBoard');
+    // res.sendFile(path.join(__dirname + '/web/loginnew.html'));
     //res.send(users);
 })
 
