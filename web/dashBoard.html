@@ -1,51 +1,194 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!--===============================================================================================-->
+    <link rel="icon" type="image/png" href="images/icons/favicon.ico" />
+    <!--===============================================================================================-->
+    <link rel="stylesheet" type="text/css" href="vendor/bootstrap/css/bootstrap.min.css">
+    <!--===============================================================================================-->
+    <link rel="stylesheet" type="text/css" href="fonts/font-awesome-4.7.0/css/font-awesome.min.css">
+    <!--===============================================================================================-->
+    <link rel="stylesheet" type="text/css" href="vendor/animate/animate.css">
+    <!--===============================================================================================-->
+    <link rel="stylesheet" type="text/css" href="vendor/css-hamburgers/hamburgers.min.css">
+    <!--===============================================================================================-->
+    <link rel="stylesheet" type="text/css" href="vendor/select2/select2.min.css">
+    <!--===============================================================================================-->
+    <link rel="stylesheet" type="text/css" href="css/util.css">
+    <link rel="stylesheet" type="text/css" href="css/main.css">
+    <!--===============================================================================================-->
+    <style>
+        body {
+            margin: 0;
+        }
 
-  <style>
-  body {margin: 0;}
+        ul.topnav {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #333;
+        }
 
-  ul.topnav {
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    background-color: #333;
-}
+        ul.topnav li {
+            float: left;
+        }
 
-ul.topnav li {float: left;}
+        ul.topnav li a {
+            display: block;
+            color: white;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+        }
 
-ul.topnav li a {
-    display: block;
-    color: white;
-    text-align: center;
-    padding: 14px 16px;
-    text-decoration: none;
-}
+        ul.topnav li a:hover:not(.active) {
+            background-color: #111;
+        }
 
-ul.topnav li a:hover:not(.active) {background-color: #111;}
+        ul.topnav li a.active {
+            background-color: #4CAF50;
+        }
 
-ul.topnav li a.active {background-color: #4CAF50;}
+        ul.topnav li.right {
+            float: right;
+        }
 
-ul.topnav li.right {float: right;}
+        @media screen and (max-width: 600px) {
 
-@media screen and (max-width: 600px) {
-    ul.topnav li.right, 
-    ul.topnav li {float: none;}
-}
-</style>
+            ul.topnav li.right,
+            ul.topnav li {
+                float: none;
+            }
+        }
+
+        tr th, tr td {
+            text-align: center;
+        }
+    </style>
 </head>
+
 <body>
     <ul class="topnav">
         <li><a class="active" href="/home">Home</a></li>
         <li><a href="/listDocuments">My Document</a></li>
         <li><a href="/myReq">My Requests</a></li>
-        <li><a href="/uploadDocument">Upload Doc</a></li>
+        <li><a href="/uploadDocument">Upload Document</a></li>
 
         <li class="right"><a href="/logout">Logout</a></li>
     </ul>
 
+    <div class="container">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Document</th>
+                    <th>Send Verification Request</th>
+                    <th>Share Doc</th>
+                    <th>View Signature</th>
+                </tr>
+            </thead>
+            <tbody>
+                <br>
+                <h1 style="text-align:center">Incoming Requests</h1><br>
+                {{#each Requests}}
+
+                <tr>
+                    <td style="font-size:30px; font-weight:bolder"><a href="{{this.Record.DocPath}}">{{this.Record.DocName}}</a></td>
+
+                    <td>
+                        <form class="contact1-form validate-form" action="/requestVerification" method="post">
+                            <div class="wrap-input1 validate-input" data-validate="Valid email is required: ex@abc.xyz">
+                                <input class="input1" type="text" name="receiverEmail" placeholder="Email">
+                                <input class="input1" type="hidden" type="text" name="documentKey" value="{{this.Record.Key}}">
+                                <span class="shadow-input1"></span>
+
+                                <button type="submit" class="contact1-form-btn" style="margin:auto; width: 100%; margin-top:5px;">
+                                    <span>
+                                        Send Verification Request
+                                        <i class="fa fa-long-arrow-right" aria-hidden="true"></i>
+                                    </span>
+                                </button>
+                            </div>
+
+
+                        </form>
+                    </td>
+
+                    <td>
+                        <form class="contact1-form validate-form" action="/share" method="post">
+                            <div class="wrap-input1 validate-input" data-validate="Valid email is required: ex@abc.xyz">
+                                <input class="input1" type="text" name="sharerEmail" placeholder="Email">
+                                <input class="input1" type="hidden" type="text" name="documentKey" value="{{this.Record.Key}}">
+                                <span class="shadow-input1"></span>
+                                <button type="submit" class="contact1-form-btn" style="margin:auto; width: 100%; margin-top:5px;">
+                                    <span>
+                                        Share
+                                        <i class="fa fa-long-arrow-right" aria-hidden="true"></i>
+                                    </span>
+                                </button>
+                            </div>
+
+                        </form>
+                    </td>
+                    <td>
+                        <form class="contact1-form validate-form" action="/login" method="post">
+                            <input class="input1" type="hidden" type="text" name="documentKey" value="{{this.Record.Key}}">
+                            <button type="button" class="btn btn-success">View Signatures</button>
+                        </form>
+                    </td>
+                </tr>
+
+
+                {{/each}}
+
+            </tbody>
+        </table>
+    </div>
+
+    <div class="container">
+        <br>
+        <h1 style="text-align:center">Shared Documents</h1><br>
+        <table class="table table-hover" style="width: 100%;">
+            <thead>
+                <tr style="text-align:center;">
+                    <th>Document</th>
+                    <th>Uploader Name</th>
+                    <th>Uploader Email</th>
+                    <th>Signatures</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each Shares}}
+
+                <tr style="text-align:center;">
+                    <td style="font-weight:bolder"><a href="{{this.Record.DocumentPath}}">{{this.Record.DocumentName}}</a></td>
+
+                    <td style="font-size:30px; font-weight:bolder">
+                        <p>{{this.Record.SenderName}}</p>
+                    </td>
+
+                    <td style="font-size:30px; font-weight:bolder">
+                        <p>{{this.Record.SenderMail}}</p>
+                    </td>
+                    <td style="font-size:30px; font-weight:bolder">
+                        <form class="contact1-form validate-form" action="/login" method="post" style="margin:auto;">
+                            <input class="input1" type="hidden" type="text" name="documentKey" value="{{this.Record.Key}}">
+                            <button type="submit" class="btn btn-success">View Signatures</button>
+                        </form>
+                    </td>
+                </tr>
+
+
+                {{/each}}
+
+            </tbody>
+        </table>
+    </div>
 
 
 </body>
+
 </html>

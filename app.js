@@ -97,7 +97,7 @@ Fabric_Client.newDefaultKeyValueStore({
     }
 });
 
-app.get('/home', (req, res)=>{
+app.get('/home', (req, res) => {
     res.redirect('/');
 });
 
@@ -118,7 +118,39 @@ app.get('/login', (req, res) => {
 
 app.get('/dashBoard', (req, res) => {
     if (req.cookies.token == null) res.redirect('/login');
-    else res.sendFile(path.join(__dirname + '/web/dashBoard.html'));
+    else {
+        var token = req.cookies.token;
+        /////////////////////////////////
+        const request = {
+            chaincodeId: 'fabcar',
+            fcn: 'getShares',
+            args: [token]
+        };
+
+        ledgerAPI.query(channel, request).then((query_responses) => {
+            console.log("Query has completed, checking results");
+            // query_responses could have more than one  results if there multiple peers were used as targets
+            if (query_responses && query_responses.length == 1) {
+                if (query_responses[0] instanceof Error) {
+                    console.error("error from query = ", query_responses[0]);
+                } else {
+                    console.log("Response is ", query_responses[0].toString());
+                    var result = JSON.parse(query_responses[0].toString());
+                    //edited 
+                    console.log(result);
+
+                    res.render('dashBoard.html', {
+                        Shares: result.values
+                    });
+                }
+            } else {
+                console.log("No payloads were returned from query");
+            }
+        }).catch((err) => {
+            console.error('Failed to query successfully :: ' + err);
+        });
+        /////////////////////////////////
+    } 
 })
 
 app.get('/logout', (req, res) => {
@@ -205,8 +237,44 @@ app.get('/listDocuments', (req, res) => {
                     var result = JSON.parse(query_responses[0].toString());
                     //edited 
                     console.log(result);
-                    
+
                     res.render('listDocs.html', {
+                        Docs: result.values
+                    });
+                }
+            } else {
+                console.log("No payloads were returned from query");
+            }
+        }).catch((err) => {
+            console.error('Failed to query successfully :: ' + err);
+        });
+        ////////////////////////////////////////////
+    }
+});
+
+app.get('/myReq', (req, res) => {
+    if (req.cookies.token == null) res.redirect('/login');
+    else {
+        ////////////////////////////////////////////
+        const request = {
+            chaincodeId: 'fabcar',
+            fcn: 'myReq',
+            args: [req.cookies.token]
+        };
+
+        ledgerAPI.query(channel, request).then((query_responses) => {
+            console.log("Query has completed, checking results");
+            // query_responses could have more than one  results if there multiple peers were used as targets
+            if (query_responses && query_responses.length == 1) {
+                if (query_responses[0] instanceof Error) {
+                    console.error("error from query = ", query_responses[0]);
+                } else {
+                    console.log("Response is ", query_responses[0].toString());
+                    var result = JSON.parse(query_responses[0].toString());
+                    //edited 
+                    console.log(result);
+
+                    res.render('listOwnReq.html', {
                         Docs: result.values
                     });
                 }
@@ -287,7 +355,29 @@ app.post('/register', (req, res) => {
     });
 });
 
+app.post('/requestVerification', (req, res) => {
+    var token = req.cookies.token;
+    var receiverEmail = req.body.receiverEmail;
+    var documentKey = req.body.documentKey;
 
+    tx_id = fabric_client.newTransactionID();
+    console.log("Assigning transaction_id: ", tx_id._transaction_id);
+
+    var request = {
+        chaincodeId: 'fabcar',
+        fcn: 'requestForSignature',
+        args: [token, documentKey, receiverEmail],
+        chainId: 'mychannel',
+        txId: tx_id
+    };
+
+    // send the transaction proposal to the peers
+    ledgerAPI.slimInvoke(channel, request, peer).then(() => {
+        res.redirect('/myReq');
+    }).catch((err) => {
+        console.error('Failed to invoke successfully :: ' + err);
+    });
+})
 
 app.post('/login', (req, res) => {
     const user = {
@@ -426,10 +516,40 @@ app.post('/uploadDocument', upload.single('myfile'), (req, res) => {
     });
 });
 
+app.post("/share", (req, res) => {
+    if (req.cookies.token == null) res.redirect('/login');
+    var token = req.cookies.token;
+    var receiverEmail = req.body.receiverEmail;
+    var documentKey = req.body.documentKey;
+
+    tx_id = fabric_client.newTransactionID();
+    console.log("Assigning transaction_id: ", tx_id._transaction_id);
+
+    // createCar chaincode function - requires 5 args, ex: args: ['CAR12', 'Honda', 'Accord', 'Black', 'Tom'],
+    // changeCarOwner chaincode function - requires 2 args , ex: args: ['CAR10', 'Dave'],
+    // must send the proposal to endorsing peers
+    var request = {
+        //targets: let default to the peer assigned to the client
+        chaincodeId: 'fabcar',
+        fcn: 'shareDocument',
+        args: [token, receiverEmail, documentKey],
+        chainId: 'mychannel',
+        txId: tx_id
+    };
+
+    // send the transaction proposal to the peers
+    ledgerAPI.slimInvoke(channel, request, peer).then(() => {
+        res.redirect('/');
+    }).catch((err) => {
+        console.error('Failed to invoke successfully :: ' + err);
+    });
+
+});
+
 
 server.listen(port, err => {
     if (err) {
         throw err
     }
     console.log('server started at 127.0.0.1:3000');
-})
+});
