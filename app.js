@@ -37,10 +37,10 @@ app.set('view engine', 'html');
 app.engine('html', require('hbs').__express);
 
 var router = express.Router();
-app.use(express.static(__dirname + '/web')); // making ./public as the static directory
-app.use(express.static(__dirname + '/files')); // making ./public as the static directory
+app.use(express.static('./web')); // making ./public as the static directory
+app.use('/files', express.static('./files')); // making ./public as the static directory
 app.use('/', router);
-app.set('views', __dirname + '/web'); // making ./views as the views directory
+app.set('views', './web'); // making ./views as the views directory
 app.use(logger('dev')); // Creating a logger (using morgan)
 app.use(express.json());
 app.use(express.urlencoded({
