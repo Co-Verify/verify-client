@@ -57,7 +57,7 @@
       <thead>
         <tr>
           <th>Document</th>
-          <th>Receiver Email</th>
+          <th>Send Verification Request</th>
           <th>Share Doc</th>
           <th>View Signature</th>
         </tr>
@@ -74,16 +74,16 @@
               <div class="wrap-input1 validate-input" data-validate="Valid email is required: ex@abc.xyz">
                 <input class="input1" type="text" name="receiverEmail" placeholder="Email">
                 <span class="shadow-input1"></span>
+
+                <button type="submit" class="contact1-form-btn">
+                    <span>
+                      Send Verification Request
+                      <i class="fa fa-long-arrow-right" aria-hidden="true"></i>
+                    </span>
+                  </button>
               </div>
 
-              <div class="container-contact1-form-btn">
-                <button type="submit" class="contact1-form-btn">
-                  <span>
-                    Send
-                    <i class="fa fa-long-arrow-right" aria-hidden="true"></i>
-                  </span>
-                </button>
-              </div>
+              
             </form>
           </td>
 
@@ -92,16 +92,15 @@
               <div class="wrap-input1 validate-input" data-validate="Valid email is required: ex@abc.xyz">
                 <input class="input1" type="text" name="sharerEmail" placeholder="Email">
                 <span class="shadow-input1"></span>
+                <button type="submit" class="contact1-form-btn">
+                    <span>
+                      Share
+                      <i class="fa fa-long-arrow-right" aria-hidden="true"></i>
+                    </span>
+                  </button>
               </div>
 
-              <div class="container-contact1-form-btn">
-                <button type="submit" class="contact1-form-btn">
-                  <span>
-                    Share
-                    <i class="fa fa-long-arrow-right" aria-hidden="true"></i>
-                  </span>
-                </button>
-              </div>
+              
             </form>
           </td>
           <form class="contact1-form validate-form" action="/login" method="post">
