@@ -80,13 +80,20 @@
         <li class="right"><a href="/logout">Logout</a></li>
     </ul>
 
+    {{#if message}}
+    <h2 class="btn btn-warning" style="text-align:center;width:100%">{{message}}</h2>
+    {{else}}
+
     <div class="container">
+
+
         <table class="table table-hover">
             <thead>
                 <tr>
                     <th>Document</th>
-                    <th>Send Verification Request</th>
-                    <th>Share Doc</th>
+                    <th>Sender Name</th>
+                    <th>Sender Email</th>
+                    <th>Sign/Reject</th>
                     <th>View Signature</th>
                 </tr>
             </thead>
@@ -96,43 +103,26 @@
                 {{#each Requests}}
 
                 <tr>
-                    <td style="font-size:30px; font-weight:bolder"><a href="{{this.Record.DocPath}}">{{this.Record.DocName}}</a></td>
+                    <td style="font-weight:bolder"><a href="{{this.Record.DocumentPath}}">{{this.Record.DocumentName}}</a></td>
 
                     <td>
-                        <form class="contact1-form validate-form" action="/requestVerification" method="post">
-                            <div class="wrap-input1 validate-input" data-validate="Valid email is required: ex@abc.xyz">
-                                <input class="input1" type="text" name="receiverEmail" placeholder="Email">
-                                <input class="input1" type="hidden" type="text" name="documentKey" value="{{this.Record.Key}}">
-                                <span class="shadow-input1"></span>
-
-                                <button type="submit" class="contact1-form-btn" style="margin:auto; width: 100%; margin-top:5px;">
-                                    <span>
-                                        Send Verification Request
-                                        <i class="fa fa-long-arrow-right" aria-hidden="true"></i>
-                                    </span>
-                                </button>
-                            </div>
-
-
-                        </form>
+                        <p>{{this.Record.SenderName}}</p>
                     </td>
 
                     <td>
-                        <form class="contact1-form validate-form" action="/share" method="post">
-                            <div class="wrap-input1 validate-input" data-validate="Valid email is required: ex@abc.xyz">
-                                <input class="input1" type="text" name="sharerEmail" placeholder="Email">
-                                <input class="input1" type="hidden" type="text" name="documentKey" value="{{this.Record.Key}}">
-                                <span class="shadow-input1"></span>
-                                <button type="submit" class="contact1-form-btn" style="margin:auto; width: 100%; margin-top:5px;">
-                                    <span>
-                                        Share
-                                        <i class="fa fa-long-arrow-right" aria-hidden="true"></i>
-                                    </span>
-                                </button>
-                            </div>
+                        <p>{{this.Record.SenderEmail}}</p>
+                    </td>
 
+                    <td>
+                        <form class="contact1-form validate-form" action="/sign" method="post">
+                            <input class="input1" type="hidden" name="documentKey" value="{{this.Record.DocumentKey}}">
+                            <input class="input1" type="hidden" name="documentHash" value="{{this.Record.DocumentHash}}">
+                            <input class="input1" type="password" name="password" placeholder="Enter your Password">
+                            <button type="submit" name="status" value="accepted" class="btn btn-success">Verify</button>
+                            <button type="submit" name="status" value="rejected" class="btn btn-danger">Reject</button>
                         </form>
                     </td>
+
                     <td>
                         <form class="contact1-form validate-form" action="/login" method="post">
                             <input class="input1" type="hidden" type="text" name="documentKey" value="{{this.Record.Key}}">
@@ -180,14 +170,12 @@
                         </form>
                     </td>
                 </tr>
-
-
                 {{/each}}
 
             </tbody>
         </table>
     </div>
-
+    {{/if}}
 
 </body>
 

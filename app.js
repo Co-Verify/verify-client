@@ -135,13 +135,38 @@ app.get('/dashBoard', (req, res) => {
                     console.error("error from query = ", query_responses[0]);
                 } else {
                     console.log("Response is ", query_responses[0].toString());
-                    var result = JSON.parse(query_responses[0].toString());
-                    //edited 
-                    console.log(result);
+                    var shares = JSON.parse(query_responses[0].toString());
+                    console.log(shares);
+                    /////////////////////////////////////////////
+                    const request = {
+                        chaincodeId: 'fabcar',
+                        fcn: 'listIncomingRequests',
+                        args: [token]
+                    };
 
-                    res.render('dashBoard.html', {
-                        Shares: result.values
+                    ledgerAPI.query(channel, request).then((query_responses) => {
+                        console.log("Query has completed, checking results");
+                        // query_responses could have more than one  results if there multiple peers were used as targets
+                        if (query_responses && query_responses.length == 1) {
+                            if (query_responses[0] instanceof Error) {
+                                console.error("error from query = ", query_responses[0]);
+                            } else {
+                                console.log("Response is ", query_responses[0].toString());
+                                var requests = JSON.parse(query_responses[0].toString());
+                                console.log(requests);
+
+                                res.render('dashBoard.html', {
+                                    Requests: requests.values,
+                                    Shares: shares.values
+                                });
+                            }
+                        } else {
+                            console.log("No payloads were returned from query");
+                        }
+                    }).catch((err) => {
+                        console.error('Failed to query successfully :: ' + err);
                     });
+                    /////////////////////////////////////////////
                 }
             } else {
                 console.log("No payloads were returned from query");
@@ -150,7 +175,7 @@ app.get('/dashBoard', (req, res) => {
             console.error('Failed to query successfully :: ' + err);
         });
         /////////////////////////////////
-    } 
+    }
 })
 
 app.get('/logout', (req, res) => {
@@ -252,6 +277,38 @@ app.get('/listDocuments', (req, res) => {
     }
 });
 
+app.get('/getSignatures/:docID', (req, res)=>{
+    const request = {
+        chaincodeId: 'fabcar',
+        fcn: 'getSignatures',
+        args: [req.params.docID]
+    };
+
+    ledgerAPI.query(channel, request).then((query_responses) => {
+        console.log("Query has completed, checking results");
+        // query_responses could have more than one  results if there multiple peers were used as targets
+        if (query_responses && query_responses.length == 1) {
+            if (query_responses[0] instanceof Error) {
+                console.error("error from query = ", query_responses[0]);
+            } else {
+                console.log("Response is ", query_responses[0].toString());
+                var result = JSON.parse(query_responses[0].toString());
+                //edited 
+                console.log("Tanmoytkd is \n\n\n\n\n\n\n: ",result);
+                res.send(query_responses[0].toString())
+
+                // res.render('listOwnReq.html', {
+                //     Docs: result.values
+                // });
+            }
+        } else {
+            console.log("No payloads were returned from query");
+        }
+    }).catch((err) => {
+        console.error('Failed to query successfully :: ' + err);
+    });
+});
+
 app.get('/myReq', (req, res) => {
     if (req.cookies.token == null) res.redirect('/login');
     else {
@@ -288,6 +345,79 @@ app.get('/myReq', (req, res) => {
     }
 });
 
+app.post('/sign', (req, res) => {
+    // res.send(req.body);
+    var documentKey = req.body.documentKey;
+    var password = req.body.password;
+    var status = req.body.status;
+    var documentHash = req.body.documentHash;
+    ////////////////////////////////////////////
+    const request = {
+        chaincodeId: 'fabcar',
+        fcn: 'getUserFromToken',
+        args: [req.cookies.token]
+    };
+
+    console.log("request: ", request);
+
+    ledgerAPI.query(channel, request).then((query_responses) => {
+        console.log("Query has completed, checking results");
+        // query_responses could have more than one  results if there multiple peers were used as targets
+        if (query_responses && query_responses.length == 1) {
+            if (query_responses[0] instanceof Error) {
+                console.error("error from query = ", query_responses[0]);
+            } else {
+                console.log("Response is ", query_responses[0].toString());
+                var user = JSON.parse(query_responses[0].toString());
+                //edited 
+                console.log("user: ", user);
+                // res.send(user)
+                var calculatedPassword = crypto.createHash('sha256').update(password).digest("base64");
+                if (calculatedPassword == user.PasswordHash) {
+                    // res.send("Correct Password");
+                    var privateKey = decryptPrivateKey(user.EncryptedPrivateKey, password);
+                    console.log("Private Key: ", privateKey);
+                    // res.send(privateKey);
+
+                    privateKeyObj = ursa.coercePrivateKey(privateKey)
+                    console.log("DocumentHash:", documentHash)
+                    sign = privateKeyObj.hashAndSign('sha256', documentHash, 'utf8', 'base64');
+
+                    ///////////////////////////////////////////////////////////
+                    tx_id = fabric_client.newTransactionID();
+                    console.log("Assigning transaction_id: ", tx_id._transaction_id);
+
+                    var request = {
+                        chaincodeId: 'fabcar',
+                        fcn: 'signDoc',
+                        args: [req.cookies.token, documentKey, status, sign, documentHash],
+                        chainId: 'mychannel',
+                        txId: tx_id
+                    };
+
+                    console.log("signDoc request: ", request)
+
+                    ledgerAPI.slimInvoke(channel, request, peer).then(() => {
+                        console.log("we have come back");
+                        res.redirect('/dashBoard');
+                    }).catch((err) => {
+                        console.error('Failed to invoke successfully :: ' + err);
+                    });
+                    ///////////////////////////////////////////////////////////
+                } else {
+                    res.render('dashBoard.html', {
+                        message: "incorrect password"
+                    });
+                }
+            }
+        } else {
+            console.log("No payloads were returned from query");
+        }
+    }).catch((err) => {
+        console.error('Failed to query successfully :: ' + err);
+    });
+    ////////////////////////////////////////////
+});
 
 function encryptPrivateKey(data, encryptKey) {
     var algorithm = 'aes256';
@@ -306,7 +436,7 @@ function decryptPrivateKey(cipher, decryptKey) {
     var inputEncoding = 'utf8';
     var outputEncoding = 'hex';
 
-    decryptKey = crypto.createHash('md5').update(encryptKey).digest("base64");
+    decryptKey = crypto.createHash('md5').update(decryptKey).digest("base64");
 
     var decipher = crypto.createDecipher(algorithm, decryptKey);
     var deciphered = decipher.update(cipher, outputEncoding, inputEncoding);
