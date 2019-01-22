@@ -139,8 +139,9 @@
             </form>
           </td>
           <td>
-            <form class="contact1-form validate-form" action="/getSignatures/{{this.Record.Key}}" method="GET">
+            <form class="contact1-form validate-form" action="/getSignatures/{{this.Record.Key}}" method="post">
               <input class="input1" type="hidden" type="text" name="documentKey" value="{{this.Record.Key}}">
+              <input class="input1" type="hidden" type="text" name="documentPath" value="{{this.Record.DocPath}}">
               <button type="submit" class="btn btn-success">View Signatures</button>
             </form>
           </td>

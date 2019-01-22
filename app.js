@@ -277,35 +277,45 @@ app.get('/listDocuments', (req, res) => {
     }
 });
 
-app.get('/getSignatures/:docID', (req, res)=>{
-    const request = {
-        chaincodeId: 'fabcar',
-        fcn: 'getSignatures',
-        args: [req.params.docID]
-    };
+app.post('/getSignatures/:docID', (req, res) => {
+    console.log("document path is: ", req.body.documentPath);
 
-    ledgerAPI.query(channel, request).then((query_responses) => {
-        console.log("Query has completed, checking results");
-        // query_responses could have more than one  results if there multiple peers were used as targets
-        if (query_responses && query_responses.length == 1) {
-            if (query_responses[0] instanceof Error) {
-                console.error("error from query = ", query_responses[0]);
+    var algorithm = 'sha256';
+    var oldfilepath = __dirname + "/" + req.body.documentPath;
+
+    hashDocument(oldfilepath, algorithm).then((fileHash) => {
+        console.log(fileHash);
+
+        const request = {
+            chaincodeId: 'fabcar',
+            fcn: 'getSignatures',
+            args: [req.params.docID, fileHash]
+        };
+
+        ledgerAPI.query(channel, request).then((query_responses) => {
+            console.log("Query has completed, checking results");
+            // query_responses could have more than one  results if there multiple peers were used as targets
+            if (query_responses && query_responses.length == 1) {
+                if (query_responses[0] instanceof Error) {
+                    console.error("error from query = ", query_responses[0]);
+                } else {
+                    console.log("Response is ", query_responses[0].toString());
+                    var result = JSON.parse(query_responses[0].toString());
+                    //edited 
+                    console.log("Tanmoytkd is \n\n: ", result);
+                    res.send(query_responses[0].toString())
+
+                    // res.render('listOwnReq.html', {
+                    //     Docs: result.values
+                    // });
+                }
             } else {
-                console.log("Response is ", query_responses[0].toString());
-                var result = JSON.parse(query_responses[0].toString());
-                //edited 
-                console.log("Tanmoytkd is \n\n\n\n\n\n\n: ",result);
-                res.send(query_responses[0].toString())
-
-                // res.render('listOwnReq.html', {
-                //     Docs: result.values
-                // });
+                console.log("No payloads were returned from query");
             }
-        } else {
-            console.log("No payloads were returned from query");
-        }
-    }).catch((err) => {
-        console.error('Failed to query successfully :: ' + err);
+        }).catch((err) => {
+            console.error('Failed to query successfully :: ' + err);
+        });
+
     });
 });
 
